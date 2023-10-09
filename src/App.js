@@ -1,9 +1,9 @@
 import React from 'react';
 import './App.css';
-import Login from './login/Login';
+import Login from './pages/login/Login';
 import {Route, Routes} from "react-router";
-import Home from "./home/Home";
-import Space from "./space/Space";
+import Home from "./pages/home/Home";
+import Space from "./pages/space/Space";
 
 
 
