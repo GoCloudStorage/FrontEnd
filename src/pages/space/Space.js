@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useSelector} from "react-redux";
 import {selectUser} from "../../store/user/UserSlice";
 import {fileAPI} from "../../service/file/file";
+import { useNavigate } from "react-router";
 import {Button, Table} from "antd"
 
 function Space() {
@@ -54,12 +55,21 @@ function Space() {
             console.log(err)
         })
     }, [userState.token]);
-
+    const navigate=useNavigate()
     return (
         <div>
             <div>username:  {userState.username}</div>
             <div>email:  {userState.email}</div>
             <div>phone:  {userState.phone}</div>
+
+            {/*添加上传文件按钮*/}
+
+            <Button type="primary" onClick={()=>{
+                navigate("/upload");
+            }}>
+                上传文件
+            </Button>
+
             <Table dataSource={dataSrc} columns={columns}></Table>
         </div>
 

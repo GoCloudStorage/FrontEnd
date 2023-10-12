@@ -23,5 +23,14 @@ export const fileAPI = {
         } catch (err) {
             console.log("failed to download file: ", err)
         }
+    },
+    preUploadFile:async (token,fileData)=>{
+        try {
+            const resp=await api.post('/',fileData,{headers:{'Authorization':token}})
+
+            return resp.data
+        }catch (err){
+            console.log("failed to preUpload file:",err)
+        }
     }
 }

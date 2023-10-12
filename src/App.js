@@ -4,6 +4,7 @@ import Login from './pages/login/Login';
 import {Route, Routes} from "react-router";
 import Home from "./pages/home/Home";
 import Space from "./pages/space/Space";
+import UploadFile from "./pages/upload/UploadFile";
 
 
 
@@ -18,6 +19,7 @@ function App() {
             <Route path={"/"} element={<Home/>}></Route>
             <Route path={"/login"} element={<Login/>}></Route>
             <Route path={"/space"} element={<Space/>}></Route>
+            <Route path={"/upload"} element={<UploadFile/>}></Route>
         </Routes>
       </div>
   );
