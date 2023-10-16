@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, {toFormData} from "axios";
 import config from "../../config";
 
 const api = axios.create({
@@ -27,10 +27,23 @@ export const fileAPI = {
     preUploadFile:async (token,fileData)=>{
         try {
             const resp=await api.post('/',fileData,{headers:{'Authorization':token}})
-
             return resp.data
         }catch (err){
             console.log("failed to preUpload file:",err)
+        }
+    },
+    updateFile:async (token,fileId,storageId,fileName,ext,path,isPrivate)=>{
+        const formData=new FormData();
+        formData.append('file_id',fileId)
+        formData.append('ext',ext)
+        formData.append('path',path)
+        formData.append('is_private',isPrivate)
+        formData.append('storage_id',storageId)
+        try{
+            const resp=await api.post(`/update`,formData,{headers:{'Authorization':token}})
+            return resp.data
+        }catch (err){
+            console.log("failed to updateFile:",err)
         }
     }
 }

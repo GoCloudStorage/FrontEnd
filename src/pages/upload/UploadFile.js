@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useSelector} from "react-redux";
 import {selectUser} from "../../store/user/UserSlice";
 import {fileAPI} from "../../service/file/file";
+import {useNavigate} from "react-router";
 
 //计算文件hash值
 async function calculateHash(file){
@@ -16,6 +17,7 @@ async function calculateHash(file){
 }
 
 function UploadFile(){
+    let navigate = useNavigate()
     const [file,setFile]=useState(null);
     const [dataSrc, setDataSrc] = useState(null)
     const userState = useSelector(selectUser)
@@ -34,13 +36,13 @@ function UploadFile(){
             });
         }
     }, [file]);
-    console.log("file hash:",fileHash)
+
     // 获取文件名和后缀
     const filename = file ? file.name : "No file selected";
     const fileExtension = filename.split('.').pop();
     const fileNameWithoutExt = filename.replace(`.${fileExtension}`, '');
 
-    //获取文件链接
+    //获取上传文件链接
     const handleSubmit=(e)=>{
         e.preventDefault();
         if (file){
@@ -59,19 +61,15 @@ function UploadFile(){
                     }else{
                         console.error("上传失败: ", msg);
                     }
-
                 })
-
                 .catch(error=>console.error('Error:',error));
-
         }
-
     }
 
     //根据链接上传文件
     useEffect(() => {
         if (dataSrc){
-            console.log("数据:",dataSrc)
+            console.log("dataSrc:",dataSrc)
 
             //将文件分块
             const chunks=[];
@@ -83,27 +81,59 @@ function UploadFile(){
             }
 
             //上传每个分块
+            let flag=true
+            let storageId=0
             const uploadChunks=async ()=>{
-                for(let i=1;i<dataSrc.chunks_nums;i++){
-                    const response=await fetch(dataSrc,{
+                for(let i=0;i<chunks.length;i++){
+                    const start=0;
+                    const end=chunks[i].size;
+                    const total=chunks[i].size;
+                    console.log("开始请求：",start,end,total)
+                    const response=await fetch(dataSrc.url,{
                         method:'PUT',
                         headers:{
-                            'OSS-Chunk-Number':i,
-                            'Content-Range':"bytes ",
-                            'OSS-Content-Length':1,
-                            'OSS-Key':1
+                            'OSS-Chunk-Number':i+1,
+                            'Content-Range':"bytes "+start+"-"+end+"/"+total,
+                            'OSS-chunks-Number':dataSrc.chunks_num,
+                            'OSS-Key':fileHash
                         },
-                        body:file.slice(offset,offset+dataSrc.chunks_size),
-                    })
+                        body:chunks[i],
+                    });
+                    let responseData= await response.json()
+                    if (response.ok){
+                        storageId=responseData.data.storage_id
+                        console.log(`分块 ${i+1} 上传成功,"data:"`,responseData);
+                    }else{
+                        flag=false
+                        console.error(`分块 ${i+1} 上传失败`);
+                        return;
+                    }
+                }
+                    //更新文件信息
+                if (flag){
+
+                    console.log("开始更新",userState.token,dataSrc.file_id,storageId)
+                    fileAPI.updateFile(userState.token,dataSrc.file_id,storageId,"","","",false)
+                        .then(response=>{
+                            if (response.status===200){
+                                window.alert('文件上传成功！');
+                                navigate("/space")
+                            }else{
+                                console.error("更新文件信息失败",response)
+                            }
+                        })
                 }
             }
+            uploadChunks()
+
+
         }
     }, [dataSrc]);
 
     return(
         <div>
             <h2>upload file</h2>
-            <form onSubmit={handleSubmit}>
+            <form >
                 <div>
                     <label htmlFor="file">Choose a file:</label>
                     <input type="file" id="file" onChange={handleFileChange} />
@@ -112,7 +142,6 @@ function UploadFile(){
                 <p>Selected File: {fileNameWithoutExt}</p>
                 <p>Selected File ext: {fileExtension}</p>
                 <p>Selected File size: {file?file.size:0}</p>
-                <p>token:{userState?userState.token:"null token"}</p>
                 <button type="submit" onClick={handleSubmit}>Upload</button>
             </form>
         </div>
